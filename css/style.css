@@ -4,3 +4,6 @@
 .questionWrap{
     display: none;
 }
+#container{
+    max-width: 600px;
+}
