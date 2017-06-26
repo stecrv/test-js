@@ -32,45 +32,64 @@ var inputValues = {
     whoAttend: function () {
         var p = this.people.slice(0);
 
+
+        console.log(this.endUser,
+            this.isStrategic,
+            this.whatValue,
+            this.whatComplexity);
+
         if (this.isStrategic == 'yes') {
             p = p.filter(function (person) {
                 return (person.head === true  );
             });
-        } else {
+            if (this.endUser == 'no') {
+                p = p.filter(function (person) {
+                    return (person.brand === false);
+                })
+            }
+            console.log('people to invite:', p);
+            return p;
+        } else if (this.whatValue && this.whatComplexity) {
             if (this.whatValue == 'low' && this.whatComplexity == 'low') {
                 p = this.people.filter(function (person) {
                     return (person.senior === false );
                 })
-            } else if (this.whatValue == 'high' && this.whatComplexity == 'high') {
+            } else if ((this.whatValue == 'low' && this.whatComplexity != 'low')
+                || (this.whatValue != 'low' && this.whatComplexity == 'low')) {
+                p = this.people.filter(function (person) {
+                    return (person.head === false && person.senior == true);
+                })
+            } else if (this.whatValue == 'high' || this.whatComplexity == 'high') {
                 p = this.people.filter(function (person) {
                     return (person.head === true );
                 })
-            } else  if (this.whatValue  && this.whatComplexity ) {
-                if (this.whatValue != 'high' && this.whatComplexity != 'high') {
-                    p = this.people.filter(function (person) {
-                        return (person.head === false && person.senior == true);
-                    })
-                } else if ((this.whatValue == 'high' && this.whatComplexity == 'medium')
-                    || ((this.whatValue == 'medium' && this.whatComplexity == 'high'))) {
-                    p = this.people.filter(function (person) {
-                        return (person.head === true );
-                    })
-                } else if ((this.whatValue == 'high' && this.whatComplexity != 'high')
-                    || (this.whatValue != 'high' && this.whatComplexity == 'high')) {
-                    p = this.people.filter(function (person) {
-                        return (person.head === false && person.senior == true);
-                    })
-                }
+            } else if (this.whatValue != 'high' && this.whatComplexity != 'high') {
+                p = this.people.filter(function (person) {
+                    return (person.head === false && person.senior == true);
+                })
+            } else if ((this.whatValue == 'high' && this.whatComplexity == 'medium')
+                || ((this.whatValue == 'medium' && this.whatComplexity == 'high'))) {
+                p = this.people.filter(function (person) {
+                    return (person.head === true );
+                })
+            } else if ((this.whatValue == 'high' && this.whatComplexity != 'high')
+                || (this.whatValue != 'high' && this.whatComplexity == 'high')) {
+                p = this.people.filter(function (person) {
+                    return (person.head === false && person.senior == true);
+                })
             }
+            if (this.endUser == 'no' && p.length>0) {
+                p = p.filter(function (person) {
+                    return (person.brand === false);
+                })
+            }
+            console.log('people to invite:', p);
+            return p;
         }
 
-        if (this.endUser == 'no') {
-            p = p.filter(function (person) {
-                return (person.brand === false);
-            })
-        }
-        console.log('people to invite:', p);
-        return p;
+
+        console.log('people to invite:', null);
+        return []
     }
 };
 
@@ -113,14 +132,8 @@ var Workflow = {
         this.onClikRadio('whatComplexity', this.levelThree.bind(this))
     },
     levelOne: function (val) {
-        this.hide("#isStrategic");
-        this.hide("#whatValue");
-        this.hide("#whatComplexity");
         this.reset(1);
         this.inputValues.endUser = val;
-        if (val === 'yes') {
-            this.involve.brand.add = true;
-        }
         this.attendingList(this.inputValues.whoAttend());
         this.levelOneNext()
     },
@@ -132,10 +145,6 @@ var Workflow = {
     levelTwo: function (val) {
         this.reset(2);
         this.inputValues.isStrategic = val;
-        if (val === 'yes') {
-            this.involve.brand.head = true;
-            this.involve.tech.head = true;
-        }
         this.attendingList(this.inputValues.whoAttend());
         this.leveltwoNext()
     },
@@ -161,32 +170,35 @@ var Workflow = {
     },
     levelThreeEValuation: function () {
         this.reset(3);
+        this.attendingList(this.inputValues.whoAttend());
         if (this.inputValues.whatValue && this.inputValues.whatComplexity) {
             this.showAttending();
-            this.attendingList(this.inputValues.whoAttend());
+        }else{
+
         }
     },
     reset: function (lvl) {
 
         if (lvl === 1) {
-            this.involve.tech.add = false;
-            this.involve.brand.add = false;
-
+            this.inputValues.endUser = null;
             this.inputValues.isStrategic = null;
+            this.inputValues.whatValue = null;
+            this.inputValues.whatValue = null;
+            this.hide("#isStrategic");
+            this.hide("#whatValue");
+            this.hide("#whatComplexity");
 
-            this.reset(2);
-            this.reset(3);
         }
         if (lvl === 2) {
-            this.involve.brand.head = false;
-            this.involve.tech.head = false;
-
+            this.inputValues.isStrategic = null;
             this.inputValues.whatValue = null;
-            this.inputValues.whatComplexity = null;
+            this.inputValues.whatValue = null;
+            this.hide("#whatValue");
+            this.hide("#whatComplexity");
 
-            this.reset(3);
         }
         if (lvl === 3) {
+
 
         }
     },
@@ -195,9 +207,13 @@ var Workflow = {
     },
     attendingList: function (list) {
 
-        var html = '<ul>';
+
+        var html = '<ul class="list-group">';
+        var c = '';
         for (var i = 0; i < list.length; i++) {
-            html += '<li>' + list[i].name + ': ' + list[i].role + '</li>';
+            if(list[i].tech) c = 'list-group-item-success';
+            if(list[i].brand) c = 'list-group-item-info';
+            html += '<li class="list-group-item " >' + list[i].name + '<span class="badge '+c+'"> ' + list[i].role + '</span></li>';
         }
         html += '</ul>';
 
@@ -212,7 +228,7 @@ var Workflow = {
     },
     onClikRadio: function (name, func) {
         $("input[name='" + name + "']").change(function () {
-            var v = $("input[name='" + name + "']:checked").val()
+            var v = $("input[name='" + name + "']:checked").val();
             func(v, name);
         });
     },
