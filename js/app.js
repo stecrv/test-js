@@ -187,15 +187,18 @@ var Workflow = {
             this.hide("#isStrategic");
             this.hide("#whatValue");
             this.hide("#whatComplexity");
-
+            $("#isStrategic label").removeClass('active');
+            $("#whatValue label").removeClass('active');
+            $("#whatComplexity label").removeClass('active');
         }
         if (lvl === 2) {
             this.inputValues.isStrategic = null;
             this.inputValues.whatValue = null;
             this.inputValues.whatValue = null;
             this.hide("#whatValue");
-            this.hide("#whatComplexity");
-
+            this.hide("#whatValue");
+            $("#whatValue label").removeClass('active');
+            $("#whatValue label").removeClass('active');
         }
         if (lvl === 3) {
 
